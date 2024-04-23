@@ -1,28 +1,15 @@
 
 import { usePyodide } from "@/components/pyodide";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import hljs from "highlight.js";
 import Editor from "@monaco-editor/react";
 import Example from "@/components/graph";
 
+import default_code from "@/python/default.py";
+
 type PythonExecutionResult = [Error | null, any];
 
-const DEFAULT_CODE = `
-# Your Python code should produce a single JSON-serializable result
-import json
-
-json.dumps({
-    "hello": "world",
-    "key": {
-        "nested": "value",
-        "number": 1,
-        "bool": True,
-        "nonce": None,
-        "array": [1, 2, 3]
-    }
-})
-
-`.trimStart();
+const DEFAULT_CODE = default_code.trim();
 
 export default function Home() {
   const pyodide = usePyodide();
@@ -30,25 +17,66 @@ export default function Home() {
   const [results, setResult] = useState<PythonExecutionResult>([null, null]);
 
   const evaluate = useCallback((code: string) => {
+    console.info("Evaluating code...");
     pyodide.evaluate(code)
       .then(result => setResult([null, result]))
       .catch(err => setResult([err, null])); 
   }, [pyodide, setResult]);
 
-  const onKeyPress = (e) => {
-    if (e.key === "s" && e.ctrlKey) {
-      evaluate(code);
-      e.preventDefault();
+  const save = useCallback((code: string) => {
+    console.info("Saving code...");
+    localStorage.setItem("code", code);
+  }, []);
+  
+  const load = useCallback(() => {
+    console.info("Loading code...");
+    const code = localStorage.getItem("code");
+    if (code) {
+      setCode(code);
+    }
+  }, []);
+
+  const clear = useCallback(() => {
+    console.info("Clearing code...");
+    localStorage.removeItem("code");
+    setCode(DEFAULT_CODE);
+  }, []);
+
+  const onKeyDown = (e) => {
+    if (e.ctrlKey) {
+      switch (e.key) {
+        case "r":
+          evaluate(code);
+          e.preventDefault();
+          break;
+        case "s":
+          save(code);
+          e.preventDefault();
+          break;
+        case "l":
+          load();
+          e.preventDefault();
+          break;
+        case "d":
+          clear();
+          e.preventDefault();
+          break;
+      }
     }
   };
   useEffect(() => {
-    window.addEventListener("keydown", onKeyPress);
-    return () => window.removeEventListener("keydown", onKeyPress);
-  }, [onKeyPress]);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [onKeyDown]);
 
   return (
     <main className="flex flex-row h-screen">
-      <ControlBar onRun={() => evaluate(code)} />
+      <ControlBar 
+        onRun={() => evaluate(code)}
+        onSave={() => save(code)}
+        onLoad={load}
+        onClear={clear}
+      />
       <Editor 
         defaultLanguage="python" theme="vs-dark"
         height="100%" width="55vw"
@@ -67,15 +95,25 @@ export default function Home() {
 }
 
 type Fn = () => void;
-function ControlBar({ onRun }: { onRun: Fn }) {
+function ControlBar({ onRun, onSave, onLoad, onClear }: { onRun: Fn, onSave: Fn, onLoad: Fn, onClear: Fn }) {
   const buttons = [
-    { label: "Run", onClick: onRun },
+    { label: "Run", keybind: ["Control", "R"], onClick: onRun },
+    { label: "Save", keybind: ["Control", "S"], onClick: onSave },
+    { label: "Load", keybind: ["Control", "L"], onClick: onLoad },
+    { label: "Clear", keybind: ["Control", "D"], onClick: onClear },
   ];
 
   return (
     <div className="flex flex-col w-[10vw] h-full bg-gray-800">
-      {buttons.map(({ label, onClick }) => (
-        <button key={label} className="h-10 bg-purple-700 m-3" onClick={onClick}>{label}</button>
+      {buttons.map(({ label, keybind, onClick }) => (
+        <button 
+          key={label}
+          className="h-10 bg-purple-700 m-3 mb-0"
+          title={`${keybind.join(" + ")}`}
+          onClick={onClick}
+        >
+          {label}
+        </button>
       ))}
     </div>
   );
@@ -94,7 +132,7 @@ function Results({ results: [error, result] }: { results: PythonExecutionResult 
     InnerResult = () => 
       <div className="flex items-center justify-center h-full">
         <p className="whitespace-pre-wrap word-wrap break-word overflow-auto p-4">
-          Press 'Run' or Press <kbd>Control</kbd> + <kbd>S</kbd> to see your results...
+          Press 'Run' or Press <kbd>Control</kbd> + <kbd>R</kbd> to see your results...
         </p>
       </div>;
   }
@@ -154,14 +192,14 @@ function ResultsJSON({ result }: { result: any }) {
     }
     
     if (codeRef.current) {
-      hljs.highlightBlock(codeRef.current);
+      delete codeRef.current.dataset.highlighted
+      hljs.highlightElement(codeRef.current);
     }
   }, [codeRef]);
-  useEffect(() => highlightSyntax(100), [result, highlightSyntax]);
 
   useEffect(() => {
     if (codeRef.current) {
-      hljs.highlightBlock(codeRef.current);
+      highlightSyntax(100);
     }
   }, [result, codeRef]);
 
@@ -176,6 +214,25 @@ function ResultsGraph({ result }: { result: any }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [dimensions, setDimensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
 
+
+  const root = useMemo(() => {
+    // Depth-first search to convert the JSON object into a tree
+    const visit = (node: any, parent: any) => {
+      const name = node.action ? node.action.description : "All";
+      const expectedValue = node.score / node.visits;
+      const newNode = { 
+        name: `${name} (${expectedValue.toFixed(3)}/${node.visits})`,
+        children: node.children
+          .filter((child: any) => child.visits > 0)
+          .map((child: any) => visit(child, node)),
+      };
+
+      return newNode;
+    };
+
+    return visit(result.tree, null);
+  }, [result]);
+
   useEffect(() => {
     if (!ref.current) {
       console.warn("ref is null");
@@ -189,7 +246,7 @@ function ResultsGraph({ result }: { result: any }) {
 
   return (
     <div className="w-full h-full text-black bg-white" ref={ref}>
-      <Example width={dimensions.width} height={dimensions.height} />
+      <Example root={root} width={dimensions.width} height={dimensions.height} />
     </div>
   );
 }

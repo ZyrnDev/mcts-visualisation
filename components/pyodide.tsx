@@ -64,7 +64,11 @@ class PyodideState {
 
     runAsyncJSON(code: string): Promise<any> {
         return this.runAsync(code).then((result) => {
-            return JSON.parse(result);
+            try {
+                return JSON.parse(result);
+            } catch (err) {
+                throw new Error(`Error parsing JSON: ${err}. \nResult: ${result}`);
+            }
         });
     }
 
@@ -101,11 +105,11 @@ function javascriptToPython(data: any): string {
 
 const PyodideContext = createContext<PyodideState>(new PyodideState(null, true, null));
 
-// async function preparePythonEnvironment(pyodide: PyodideInterface): Promise<void> {
-//     await pyodide.loadPackage("micropip");
-//     const micropip = pyodide.pyimport("micropip");
-//     await micropip.install(`${window.location.origin}/Cryo_UTS-0.1-py3-none-any.whl`);
-// }
+async function preparePythonEnvironment(pyodide: PyodideInterface): Promise<void> {
+    await pyodide.loadPackage("micropip");
+    const micropip = pyodide.pyimport("micropip");
+    await micropip.install("jsonpickle");
+}
 
 function isPyodideLoaderReady(): boolean {
  return (typeof (window as any)?.loadPyodide === "function")
@@ -133,7 +137,7 @@ export const PyodideProvider: FC<PropsWithChildren> = ({ children }) => {
 
         setLoading(true);
         loadPyodide().then(async (pyodide) => {
-            // await preparePythonEnvironment(pyodide);
+            await preparePythonEnvironment(pyodide);
             success(pyodide);
         })
         .catch(fail);

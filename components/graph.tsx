@@ -13,56 +13,17 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-const data: TreeNode = {
-  name: 'T',
-  children: [
-    {
-      name: 'A',
-      children: [
-        { name: 'A1' },
-        { name: 'A2' },
-        { name: 'A3' },
-        {
-          name: 'C',
-          children: [
-            {
-              name: 'C1',
-            },
-            {
-              name: 'D',
-              children: [
-                {
-                  name: 'D1',
-                },
-                {
-                  name: 'D2',
-                },
-                {
-                  name: 'D3',
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    { name: 'Z' },
-    {
-      name: 'B',
-      children: [{ name: 'B1' }, { name: 'B2' }, { name: 'B3' }],
-    },
-  ],
-};
-
-const defaultMargin = { top: 30, left: 30, right: 30, bottom: 70 };
+const defaultMargin = { top: 50, left: 80, right: 80, bottom: 80 };
 
 export type LinkTypesProps = {
+  root: TreeNode;
   width: number;
   height: number;
   margin?: { top: number; right: number; bottom: number; left: number };
 };
 
 export default function Example({
+  root,
   width: totalWidth,
   height: totalHeight,
   margin = defaultMargin,
@@ -117,7 +78,7 @@ export default function Example({
         <rect width={totalWidth} height={totalHeight} rx={14} fill="#272b4d" />
         <Group top={margin.top} left={margin.left}>
           <Tree
-            root={hierarchy(data, (d) => (d.isExpanded ? null : d.children))}
+            root={hierarchy(root, (d) => (d.isExpanded ? null : d.children))}
             size={[sizeWidth, sizeHeight]}
             separation={(a, b) => (a.parent === b.parent ? 1 : 0.5) / a.depth}
           >
@@ -135,8 +96,8 @@ export default function Example({
                 ))}
 
                 {tree.descendants().map((node, key) => {
-                  const width = 40;
-                  const height = 20;
+                  const width = 130;
+                  const height = 30;
 
                   let top: number;
                   let left: number;
@@ -156,7 +117,7 @@ export default function Example({
                     <Group top={top} left={left} key={key}>
                       {node.depth === 0 && (
                         <circle
-                          r={12}
+                          r={60}
                           fill="url('#links-gradient')"
                           onClick={() => {
                             node.data.isExpanded = !node.data.isExpanded;
@@ -186,7 +147,7 @@ export default function Example({
                       )}
                       <text
                         dy=".33em"
-                        fontSize={9}
+                        fontSize={12}
                         fontFamily="Arial"
                         textAnchor="middle"
                         style={{ pointerEvents: 'none' }}
