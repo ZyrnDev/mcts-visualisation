@@ -1,27 +1,46 @@
 
 import { usePyodide } from "@/components/pyodide";
-import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import hljs from "highlight.js";
 import Editor from "@monaco-editor/react";
 import Example from "@/components/graph";
 
-import default_code from "@/python/default.py";
+import TIC_TAC_TOE_SOLUTION from "@/python/tic_tac_toe.py";
+import BASE_SOLUTION from "@/python/base.py";
+import { NumberInput } from "@/components/input";
+
+type Fn = () => void;
+type State<T> = {
+  value: T,
+  update: (value: T) => void,
+};
+const createState = <T,>(initial_value: T): State<T> => {
+  const [value, setValue] = useState<T>(initial_value);
+  return { value, update: setValue };
+}
 
 type PythonExecutionResult = [Error | null, any];
 
-const DEFAULT_CODE = default_code.trim();
+const DEFAULT_CODE = TIC_TAC_TOE_SOLUTION.trim();
 
 export default function Home() {
   const pyodide = usePyodide();
+
   const [code, setCode] = useState(DEFAULT_CODE);
   const [results, setResult] = useState<PythonExecutionResult>([null, null]);
 
+  const max_runtime = createState(0.25); // Max runtime in seconds should be a quarter of a second
+  const max_iterations = createState(100_000); // Max iterations should be 100k
+
+
   const evaluate = useCallback((code: string) => {
     console.info("Evaluating code...");
-    pyodide.evaluate(code)
-      .then(result => setResult([null, result]))
-      .catch(err => setResult([err, null])); 
-  }, [pyodide, setResult]);
+    pyodide.evaluate(BASE_SOLUTION) // Run the template code first
+      .then(() => pyodide.evaluate(code)) // Then run the user's code
+      .then(() => pyodide.evaluate(`mcts_json(max_iterations=${max_iterations.value}, max_runtime=${max_runtime.value})`)) // Finally, run the mcts_json function
+      .then(result => setResult([null, result])) // If successful, set the result
+      .catch(err => setResult([err, null])); // If there's an error, set the error
+  }, [pyodide, setResult, max_iterations.value, max_runtime.value]);
 
   const save = useCallback((code: string) => {
     console.info("Saving code...");
@@ -76,10 +95,12 @@ export default function Home() {
         onSave={() => save(code)}
         onLoad={load}
         onClear={clear}
+        max_runtime={max_runtime}
+        max_iterations={max_iterations}
       />
       <Editor 
         defaultLanguage="python" theme="vs-dark"
-        height="100%" width="55vw"
+        height="100%" width="40vw"
         value={code}
         onChange={(value) => {
           if (typeof value === "string") {
@@ -94,8 +115,7 @@ export default function Home() {
   );
 }
 
-type Fn = () => void;
-function ControlBar({ onRun, onSave, onLoad, onClear }: { onRun: Fn, onSave: Fn, onLoad: Fn, onClear: Fn }) {
+function ControlBar({ onRun, onSave, onLoad, onClear, max_runtime, max_iterations }: { onRun: Fn, onSave: Fn, onLoad: Fn, onClear: Fn, max_runtime: State<number>, max_iterations: State<number> }) {
   const buttons = [
     { label: "Run", keybind: ["Control", "R"], onClick: onRun },
     { label: "Save", keybind: ["Control", "S"], onClick: onSave },
@@ -115,6 +135,9 @@ function ControlBar({ onRun, onSave, onLoad, onClear }: { onRun: Fn, onSave: Fn,
           {label}
         </button>
       ))}
+      <hr className="m-3 mb-0 border-t-[0.25rem] border-gray-700" />
+      <NumberInput label="Max Runtime (s)" value={max_runtime.value} onChange={max_runtime.update} className="h-10 m-3 mb-0 p-3" />
+      <NumberInput label="Max Iterations (cycles)" value={max_iterations.value} onChange={max_iterations.update} className="h-10 m-3 mb-0 p-3" />
     </div>
   );
 }
@@ -138,7 +161,7 @@ function Results({ results: [error, result] }: { results: PythonExecutionResult 
   }
 
   return (
-    <div className="w-[35vw] h-full overflow-auto">
+    <div className="w-[50vw] h-full overflow-auto">
       <DisplayTypeSelector displayType={displayType} setDisplayType={setDisplayType} />
       <pre className="w-full h-full">
         <InnerResult />
@@ -217,20 +240,20 @@ function ResultsGraph({ result }: { result: any }) {
 
   const root = useMemo(() => {
     // Depth-first search to convert the JSON object into a tree
-    const visit = (node: any, parent: any) => {
-      const name = node.action ? node.action.description : "All";
+    const visit = (node: any) => {
+      const name = node.action ?? "All";
       const expectedValue = node.score / node.visits;
       const newNode = { 
         name: `${name} (${expectedValue.toFixed(3)}/${node.visits})`,
         children: node.children
           .filter((child: any) => child.visits > 0)
-          .map((child: any) => visit(child, node)),
+          .map((child: any) => visit(child)),
       };
 
       return newNode;
     };
 
-    return visit(result.tree, null);
+    return visit(result.tree);
   }, [result]);
 
   useEffect(() => {
@@ -259,54 +282,3 @@ function ResultsSuccess({ result, displayType }: { result: any, displayType: Dis
       return <ResultsGraph result={result} />;
   }
 }
-
-// function PyodideExample() {
-//   const pyodide = usePyodide();
-
-//   const { ready, reason } = pyodide.getStatus();
-//   if (!ready) {
-//     return <p>Pyodide is not ready because: {reason}</p>;
-//   }
-
-//   const result = useMemo(() => {
-//     const status = pyodide.getStatus();
-//     if (!status.ready) {
-//       return `Pyodide is not ready because: ${status.reason}`;
-//     }
-
-//     try {
-//       return pyodide.runJSON(code);
-//     }
-//     catch (err) {
-//       return `Error: ${err}`;
-//     }
-//   }, [pyodide]);
-
-//   return <LabelledCodeBlock label="Result:" code={JSON.stringify(result, null, 2)} />
-// }
-
-// function TextEditor({ code, onCodeChange, language }: { code: string, onCodeChange: (codeode: string) => void, language?: string }) {
-//   const codeRef = useRef<HTMLElement | null>(null);
-
-//   const languageClass = language ? `language-${language}` : "";
-//   useEffect(() => {
-//     if (!codeRef.current) {
-//       console.warn("codeRef is null");
-//       return;
-//     }
-
-//     if (codeRef.current) {
-//       hljs.highlightBlock(codeRef.current);
-//     }
-//   }, [code, codeRef]);
-
-//   return (
-//     <div className="">
-//       <pre>
-//         <code className={languageClass} ref={codeRef}>
-//           <input type="text" value={code} onChange={(e) => onCodeChange(e.target.value)} />
-//         </code>
-//       </pre>
-//     </div>
-//   );
-// }

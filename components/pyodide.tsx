@@ -64,6 +64,10 @@ class PyodideState {
 
     runAsyncJSON(code: string): Promise<any> {
         return this.runAsync(code).then((result) => {
+            if (result === undefined) {
+                return undefined;
+            }
+
             try {
                 return JSON.parse(result);
             } catch (err) {
