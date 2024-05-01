@@ -240,14 +240,15 @@ function ResultsGraph({ result }: { result: any }) {
 
   const root = useMemo(() => {
     // Depth-first search to convert the JSON object into a tree
-    const visit = (node: any) => {
+    const visit = (node: any, depth: number = 0) => {
       const name = node.action ?? "All";
       const expectedValue = node.score / node.visits;
       const newNode = { 
         name: `${name} (${expectedValue.toFixed(3)}/${node.visits})`,
         children: node.children
           .filter((child: any) => child.visits > 0)
-          .map((child: any) => visit(child)),
+          .map((child: any) => visit(child, depth + 1)),
+        isExpanded: depth <= 1,
       };
 
       return newNode;

@@ -17,12 +17,6 @@ class Node():
   def is_leaf(self):
     return len(self.children) == 0
   
-  def is_terminal(self):
-    if not self.is_leaf():
-      return False
-    
-    return len(legal_actions(self.history())) == 0
-  
   def history(self):
     history = []
     node = self
@@ -31,6 +25,8 @@ class Node():
     while node.parent is not None:
       history.append(node.action)
       node = node.parent
+
+    history.reverse()
 
     return history
   
@@ -49,9 +45,13 @@ class Node():
 def simulate(node):
   # Simulate a random game from the current node
   current = node
-  while not current.is_terminal():
-    action = random.choice(legal_actions(current.history()))
+  actions = legal_actions(current.history())
+
+  while len(actions) > 0: # The game is not in a terminal state (i.e. there are legal actions to take)
+    action = random.choice(actions)
+    
     current = Node(parent=current, action=action)
+    actions = legal_actions(current.history())
 
   return current
 
@@ -112,8 +112,9 @@ def mcts_json(max_iterations=1000, max_runtime=1.0):
   # Convert the action to a string for JSON serialization
   breadth_first_search(tree, lambda node: setattr(node, "action", str(node.action)))
 
+
   return jsonpickle.encode({
+    "time": end - start,
     "solution": str(solution),
-    "tree": tree,
-    "time": end - start
+    "tree": tree
   }, unpicklable=False)
