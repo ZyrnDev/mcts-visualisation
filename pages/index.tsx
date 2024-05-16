@@ -1,7 +1,7 @@
 "use client"
 
 import { usePyodide } from "@/components/pyodide";
-import { FC, PropsWithChildren, createContext, use, useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 
 import PYTHON_TIC_TAC_TOE from "@/python/tic_tac_toe.py";
@@ -21,7 +21,7 @@ type State<T> = {
   value: T,
   update: (value: T) => void,
 };
-const createState = <T,>(initial_value: T): State<T> => {
+const useStateObject = <T,>(initial_value: T): State<T> => {
   const [value, setValue] = useState<T>(initial_value);
   return { value, update: setValue };
 }
@@ -62,12 +62,12 @@ const PROBLEMS: Problem[] = [
 export default function Home() {
   const pyodide = usePyodide();
 
-  const problem = createState(PROBLEMS[0]); // Code to load into the editor window
-  const maxRuntime = createState(0.25); // Max runtime in seconds should be a quarter of a second
-  const maxIterations = createState(100_000); // Max iterations should be 100k
+  const problem = useStateObject(PROBLEMS[0]); // Code to load into the editor window
+  const maxRuntime = useStateObject(0.25); // Max runtime in seconds should be a quarter of a second
+  const maxIterations = useStateObject(100_000); // Max iterations should be 100k
 
   const [code, setCode, actions] = useCode(problem.value.code);
-  useEffect(() => setCode(problem.value.code), [problem]);
+  useEffect(() => setCode(problem.value.code), [problem, setCode]);
   const [results, setResult] = useState<PythonExecutionResult>([null, null]);
 
   const evaluate = useCallback((code: string) => {
@@ -79,13 +79,16 @@ export default function Home() {
       .catch(err => setResult([err, null])); // If there's an error, set the error
   }, [pyodide, setResult, maxIterations.value, maxRuntime.value]);
 
-  const keybinds = {
-    "r": () => evaluate(code),
-    "s": () => actions.save(code),
-    "l": actions.load,
-    "d": actions.reset,
-  };
-  useEffect(() => registerKeyboardEvents(keybinds), [keybinds]);
+  useEffect(() =>{
+    const keybinds = {
+      "r": () => evaluate(code),
+      "s": () => actions.save(code),
+      "l": actions.load,
+      "d": actions.reset,
+    };
+
+    registerKeyboardEvents(keybinds)
+  }, [actions, evaluate, code]);
 
   return (
     <main className="flex flex-row h-screen">

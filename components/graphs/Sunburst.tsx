@@ -99,22 +99,23 @@ function Segment({ node, startAngle, endAngle, depth, maxDepth, radius, onClick 
   return (
     <g>
       <Pie
-        children={(props) => 
-          <SegmentCustomPieChildren
-            {...props}
-            depth={depth}
-            maxDepth={maxDepth}
-            radius={radius}
-            onClick={onClick}
-          />
-        }
         data={node.children}
         pieValue={(node) => node.data.value}
         innerRadius={depth / maxDepth * radius}
         outerRadius={(depth + 1) / maxDepth * radius}
         startAngle={startAngle}
         endAngle={endAngle}
-      />
+      >
+        {(props) =>
+          <SegmentCustomPieChildren 
+              {...props}
+              depth={depth}
+              maxDepth={maxDepth}
+              radius={radius}
+              onClick={onClick}
+            />
+        }
+      </Pie>
     </g>
   );
 }

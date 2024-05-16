@@ -43,16 +43,20 @@ export function Results({ results: [error, result] }: ResultsProps): ReactNode {
     let InnerResult: () => JSX.Element = () => <></>;
   
     if (error) {
-      InnerResult = () => <ResultsError error={error} />;
+      const Error = () => <ResultsError error={error} />;
+      InnerResult = Error;
     } else if (result) {
-      InnerResult = () => <ResultsSuccess result={result} />;
+      const Success = () => <ResultsSuccess result={result} />;
+      InnerResult = Success;
     } else {
-      InnerResult = () => 
+      const Placeholder = () => (
         <div className="flex items-center justify-center h-full">
           <p className="whitespace-pre-wrap word-wrap break-word overflow-auto p-4">
-            Press 'Run' or Press <kbd>Control</kbd> + <kbd>R</kbd> to see your results...
+            Press &apos;Run&apos; or Press <kbd>Control</kbd> + <kbd>R</kbd> to see your results...
           </p>
-        </div>;
+        </div>
+      );
+      InnerResult = Placeholder;
     }
   
     return (
@@ -178,7 +182,7 @@ function ResultsJSON({ result }: ResultsJSONProps): ReactNode {
       if (codeRef.current) {
         highlightSyntax(100);
       }
-    }, [result, codeRef]);
+    }, [result, codeRef, highlightSyntax]);
   
     return (
       <code ref={codeRef} className="language-json w-full h-full">
@@ -225,7 +229,7 @@ function ResultsGraph({ result }: ResultsGraphProps): ReactNode {
       };
   
       return visit(result.tree);
-    }, [result]);
+    }, [result, metric]);
   
     useEffect(() => {
       if (!ref.current) {
@@ -242,7 +246,8 @@ function ResultsGraph({ result }: ResultsGraphProps): ReactNode {
   
     switch (type) {
       case "hierarchy":
-        Graph = (GraphProps) => <Hierarchy {...GraphProps} isVertical={isVertical} />;
+        const DirectionalHierarchy = (props: GraphProps) => <Hierarchy {...props} isVertical={isVertical} />;
+        Graph = DirectionalHierarchy;
         break;
       case "treemap":
         Graph = Treemap;

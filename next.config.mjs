@@ -1,5 +1,3 @@
-import { type } from 'os';
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     webpack: (config) => {
