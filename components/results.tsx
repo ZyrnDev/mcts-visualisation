@@ -108,7 +108,7 @@ function GraphControls({ displayType, metric, setMetric, isVertical, setVertical
     if (displayType === "json") return (<></>);
 
     const numItems = displayType === "hierarchy" ? 2 : 1;
-    const width = `${100 / numItems}%`l
+    const width = `${100 / numItems}%`;
     const selectorClasses = "border-black border-b-2 border-r-2 ";
 
     return (
