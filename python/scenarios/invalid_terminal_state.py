@@ -1,3 +1,7 @@
+# Author: Mitchell Lee
+# Problem: Fix Issue with MCTS (Third Problem)
+# Description: This problem will not have any issues with the Board or Action classes the goal is to look for problems in the MCTS implementation.
+
 import math
 import random
 
@@ -151,6 +155,7 @@ def select(node):
 
 # This function should return a list of legal actions given the current state of the game, if the game is in a terminal state, return an empty list.
 def legal_actions(action_sequence):
+
   # If the board is full, then the game is a tie (a terminal state as no more actions can be taken)
   if len(action_sequence) == MAX_TURNS:
     return []
@@ -158,18 +163,12 @@ def legal_actions(action_sequence):
   board = Board(action_sequence)
   player = board.current_player()
 
-  # Check if someone has won, then the game is in a terminal state (no more actions can be taken)
-  lines = board.rows() + board.columns() + board.diagonals()
-  for line in lines:
-    for p in PLAYERS:
-      if all([cell == p for cell in line]):
-        return []
-
-  # If the game is not in a terminal state, then there are still legal actions to take
+  # Look for possible moves/actions which can still be taken
   actions = []
   for x in range(BOARD_SIDE_LENGTH):
     for y in range(BOARD_SIDE_LENGTH):
-      if board[x, y] == EMPTY_CELL:
+      # The cell is empty so we could place our next move here
+      if board[x, y] == EMPTY_CELL: 
         action = Action(player, (x, y))
         actions.append(action)
 

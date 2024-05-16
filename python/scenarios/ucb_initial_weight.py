@@ -1,3 +1,7 @@
+# Author: Mitchell Lee
+# Problem: Fix Issue with MCTS (First Problem)
+# Description: This problem will not have any issues with the Board or Action classes the goal is to look for problems in the MCTS implementation.
+
 import math
 import random
 
@@ -117,7 +121,7 @@ def score(action_sequence):
 
 def upper_confidence_bound(node, exploration_exploitation_parameter):
   if node.visits == 0:
-    return float("inf") # Since problem space is small we should visit all nodes at least once
+    return 0.5 # The node has not been visited so avoid division by zero by returning a default value
 
   exploitation = node.score / node.visits
   exploration = exploration_exploitation_parameter * math.sqrt(2 * math.log(node.parent.visits) / node.visits)
