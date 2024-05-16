@@ -53,7 +53,7 @@ function Button({ children, className, ...props }: PropsWithChildren<ButtonProps
   return (
     <button
       {...props as any}
-      className={"bg-gradient-to-tr from-violet-400 to-fuchsia-600 text-white p-2 rounded-md shadow-md " + (className ?? "")}
+      className={"text-white p-2 rounded-md shadow-md " + (className ?? "")}
     >
       {children}
     </button>
@@ -271,7 +271,7 @@ function Confirmation(): ReactNode {
     }
   };
 
-  const StyledButton = (props: ButtonProps) => <Button {...props} className={"min-w-64 mt-4 from-transparent to-transparent font-bold text-lg " + props.className} />;
+  const StyledButton = (props: ButtonProps) => <Button {...props} className={"min-w-64 mt-4 font-bold text-lg " + props.className} />;
 
   const ConfirmButton = confirmedReady ? 
     () => <Link href="/"><StyledButton className="bg-green-800">Let&apos;s Go!</StyledButton></Link> :
