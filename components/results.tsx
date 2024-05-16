@@ -108,8 +108,8 @@ function GraphControls({ displayType, metric, setMetric, isVertical, setVertical
     if (displayType === "json") return (<></>);
 
     const numItems = displayType === "hierarchy" ? 2 : 1;
-    const width = numItems === 1 ? "w-full" : `w-1/${numItems}`;
-    const selectorClasses = "border-black border-b-2 border-r-2 " + width;
+    const width = `${100 / numItems}%`l
+    const selectorClasses = "border-black border-b-2 border-r-2 ";
 
     return (
         <div className="flex items-center justify-around bg-black">
@@ -119,6 +119,7 @@ function GraphControls({ displayType, metric, setMetric, isVertical, setVertical
                 options={METRICS.filter((m) => m !== "expected_value" || displayType !== "treemap")}
                 onChange={(metric) => setMetric(metric as Metric)}
                 className={selectorClasses}
+                styles={{ width }}
             />
             {displayType === "hierarchy" &&
                 <SelectionInput
@@ -127,6 +128,7 @@ function GraphControls({ displayType, metric, setMetric, isVertical, setVertical
                     options={["Vertical", "Horizontal"]}
                     onChange={(value) => setVertical(value === "Vertical")}
                     className={selectorClasses}
+                    styles={{ width }}
                 />
             }
         </div>
