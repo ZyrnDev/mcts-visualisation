@@ -1,3 +1,4 @@
+"use client"
 
 import { usePyodide } from "@/components/pyodide";
 import { FC, PropsWithChildren, createContext, use, useCallback, useContext, useEffect, useState } from "react";
