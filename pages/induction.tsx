@@ -61,7 +61,7 @@ function Button({ children, className, ...props }: PropsWithChildren<ButtonProps
 }
 
 interface HeadingProps extends React.HTMLProps<HTMLHeadingElement> {
-  textSize?: 'xs' | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
+  textSize?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
 }
 function Heading({ children, textSize = "lg", className, ...props }: PropsWithChildren<HeadingProps>): ReactNode {
   const sizeMapping: Record<string, [string, string]> = {
@@ -138,7 +138,7 @@ export default function Induction(): ReactNode {
         If you are unfamiliar with the game, you can read more about it 
         on <Link href="https://en.wikipedia.org/wiki/Tic-tac-toe" external>Wikipedia</Link>.
         <br /><br />
-        The AI will be the starting player (X) and it's opponent will be the second player (O).
+        The AI will be the starting player (X) and it&apos;s opponent will be the second player (O).
       </Section>
 
       <Section>
@@ -188,10 +188,10 @@ export default function Induction(): ReactNode {
       <Section>
         <Heading textSize="2xl">Usage</Heading>
         The website is not designed for mobile use, so please use a desktop or laptop computer, preferably with a large screen.
-        Since the simulation runs in a Python 'VM' inside your browser, it can be quite resource intensive.
+        Since the simulation runs in a Python &apos;VM&apos; inside your browser, it can be quite resource intensive.
         Keep this in mind when you are setting the <Code>Max Runtime</Code> and <Code>Max Iterations</Code> values.
         <br /><br />
-        If your laptop or desktop is older, you might find the website runs slowly as it the visualisation aren't well optimised
+        If your laptop or desktop is older, you might find the website runs slowly as it the visualisation aren&apos;t well optimised
         for drawing thousands of nodes so you many need to be a little patient.
         <br /><br />
         The visualisations are interactive, so you can hover over parts of the visualisation to see more information.
