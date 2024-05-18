@@ -82,8 +82,8 @@ function Instruction({ title, images = [], children, className, ...props }: Prop
         <>
           {children}
           {images.map((image, i) => (
-            <a onClick={() => setZoomed(true)} className="cursor-pointer">
-              <Picture key={i} image={image} />
+            <a key={i} onClick={() => setZoomed(true)} className="cursor-pointer">
+              <Picture image={image} />
             </a>
           )).flatMap((element, i) => [element, <br key={i} />]).slice(0, -1)}
         </>
