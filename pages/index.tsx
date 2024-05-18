@@ -1,7 +1,7 @@
 "use client"
 
 import { usePyodide } from "@/components/pyodide";
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 
 import PYTHON_TIC_TAC_TOE from "@/python/tic_tac_toe.py";
@@ -58,6 +58,8 @@ const PROBLEMS: Problem[] = [
     hide: false,
   },
 ];
+
+const MemoizedResults = memo(Results);
 
 export default function Home() {
   const pyodide = usePyodide();
@@ -119,7 +121,7 @@ export default function Home() {
           }
         }}
         />
-      <Results results={results} />
+      <MemoizedResults results={results} />
     </main>
   );
 }
