@@ -67,8 +67,14 @@ export default function Home() {
   const maxIterations = useStateObject(100_000); // Max iterations should be 100k
 
   const [code, setCode, actions] = useCode(problem.value.code);
-  useEffect(() => setCode(problem.value.code), [problem, setCode]);
   const [results, setResult] = useState<PythonExecutionResult>([null, null]);
+
+  const rawProblemUpdate = problem.update;
+  problem.update = (value) => {
+    setCode(value.code);
+    setResult([null, null]);
+    rawProblemUpdate(value);
+  };
 
   const evaluate = useCallback((code: string) => {
     console.info("Evaluating code...");
@@ -108,10 +114,8 @@ export default function Home() {
         height="100%" width="40vw"
         value={problem.value.hide ? "# Code is hidden for this problem." : code}
         onChange={(value) => {
-          if (typeof value === "string") {
+          if (value && !problem.value.hide) {
             setCode(value);
-          } else {
-            console.warn("value is not a string:", value);
           }
         }}
         />

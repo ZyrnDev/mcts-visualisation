@@ -40,7 +40,7 @@ export default function Hierarchy({
       <Group top={padding} left={padding}>
         <Tree
           root={subtreeRoot}
-          size={[innerWidth, innerHeight]}
+          size={isVertical ? [innerWidth, innerHeight] : [innerHeight, innerWidth]}
           separation={(a, b) => (a.parent === b.parent ? 1 : 0.5) / a.depth}
         >
           {(tree) => (
@@ -96,9 +96,6 @@ function TreeNode({ node, x, y, onClick }: TreeNodeProps): ReactNode {
         height={height}
         x={-width / 2}
         y={-height / 2}
-        data-depth={depth}
-        data-max-depth={maxDepth}
-        data-root={root.data.label}
         fill={`hsl(${ depth / maxDepth * 360}, 70%, 50%)`}
         stroke='black'
         onClick={() => onClick && onClick(node)}

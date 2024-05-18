@@ -1,5 +1,31 @@
 import { PropsWithChildren, ReactNode, createElement, useState } from "react";
 import NextLink from "next/link";
+import Image, { StaticImageData } from "next/image";
+
+import CodeControlPicture from "@/public/images/code_controls.png";
+import ProblemSelectorPicture from "@/public/images/problem_selector.png";
+import ProblemListPicture from "@/public/images/problem_list.png";
+import RuntimeConfigurationPicture from "@/public/images/runtime_configuration.png";
+import SetVisualisationTypePicture from "@/public/images/set_visualisation_type.png";
+import VisualisationOptionsPicture from "@/public/images/visualisation_options.png";
+
+interface ModalProps extends React.HTMLProps<HTMLDivElement> {
+  open: boolean;
+  onClose: () => void;
+}
+function Modal({ open, onClose, children, className, ...props }: PropsWithChildren<ModalProps>): ReactNode {
+  if (!open) return null;
+  return (
+    <div {...props}
+      className="fixed inset-0 max-h-screen flex justify-center items-center bg-black bg-opacity-70 p-20"
+      onClick={onClose}
+    >
+      <div className={"bg-gray-700 p-4 max-h-full rounded-3xl overflow-auto" + (className ?? "")} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 interface CodeProps extends React.HTMLProps<HTMLPreElement> {
 }
@@ -28,6 +54,50 @@ function Term({ term, definition, className, ...props }: TermProps): ReactNode {
     >
       {term}
     </span>
+  );
+}
+
+interface InstructionProps extends React.HTMLProps<HTMLDivElement> {
+  title: string;
+  images?: (string | StaticImageData)[];
+}
+function Instruction({ title, images = [], children, className, ...props }: PropsWithChildren<InstructionProps>): ReactNode {
+  const [minimized, setMinimized] = useState(true);
+  const [zoomed, setZoomed] = useState(false);
+
+  const Picture = ({ image }: { image: string | StaticImageData }) => image ? <Image src={image} alt={title} className="w-full rounded-md" /> : null;
+
+  return (
+    <div {...props} 
+      className={"text-lg mt-2 mb-2 bg-gray-700 p-2 rounded-md" + (className ?? "")}
+    >
+      <span 
+        className="font-bold cursor-pointer"
+        title={minimized ? "Click to expand" : "Click to minimize"}
+        onClick={() => setMinimized(!minimized)}
+      >
+        {title}{minimized ? " ▼" : " ▲"}
+      </span>
+      {!minimized && (
+        <>
+          {children}
+          {images.map((image, i) => (
+            <a onClick={() => setZoomed(true)} className="cursor-pointer">
+              <Picture key={i} image={image} />
+            </a>
+          )).flatMap((element, i) => [element, <br key={i} />]).slice(0, -1)}
+        </>
+      )}
+      {zoomed && (
+        <Modal open={zoomed} onClose={() => setZoomed(false)}>
+          <Heading textSize="2xl" className="text-center">{title}</Heading>
+          {children}
+          {images.map((image, i) => (
+              <Picture key={i} image={image} />
+          )).flatMap((element, i) => [element, <br key={i} />]).slice(0, -1)}
+        </Modal>
+      )}
+    </div>
   );
 }
 
@@ -114,7 +184,7 @@ const XsAndOs: () => ReactNode = () => <Term term="Xs and Os" definition="is ano
 
 export default function Induction(): ReactNode {
   return (
-    <main className="max-w-2xl mx-auto my-8">
+    <main className="max-w-7xl mx-auto my-8">
       <Centered>
         <Heading textSize="6xl" className="inline-block bg-gradient-to-tr from-violet-400 to-fuchsia-600 text-transparent bg-clip-text">
           Induction
@@ -182,7 +252,7 @@ export default function Induction(): ReactNode {
         </ul>
         <br />
 
-        These visualisations each can help you understand different aspects of the algorithm and the results.r 
+        These visualisations each can help you understand different aspects of the algorithm and the results.
       </Section>
 
       <Section>
@@ -196,6 +266,78 @@ export default function Induction(): ReactNode {
         <br /><br />
         The visualisations are interactive, so you can hover over parts of the visualisation to see more information.
         Additionally, you click on nodes to expand or collapse them for most visualisations so you can explore the tree in more detail.
+
+        <Heading textSize="lg">User Guide</Heading>
+        <Instruction
+          title="Using the Inbuilt IDE"
+          images={[CodeControlPicture]}
+        >
+          <p>
+            The inbuilt IDE is a simple code editor that allows you to write and run Python code directly in your browser.
+            You can use the inbuilt Visual Studio Code text editor to write your code.
+            <br /><br />
+            Operations
+            <ul className="list-disc pl-6">
+              <li><Term term="Run" definition="execute the code from the editor in the Python runtime" /></li>
+              <li><Term term="Save" definition="save the code from the editor to your browser&apos;s local storage" /></li>
+              <li><Term term="Load" definition="load the code from your browser&apos;s local storage into the editor" /></li>
+              <li><Term term="Reset" definition="clear the code from the editor and the browser&apos;s local storage, resetting it to the default for the current problem" /></li>
+            </ul>
+          </p>
+        </Instruction>
+
+        <Instruction
+          title="Selecting a Template / Problem"
+          images={[ProblemSelectorPicture, ProblemListPicture]}
+        >
+          <p>
+            You can select the problem you want to work on from the dropdown list.
+            The problems are numbered 1 to 3 and each has a different bug in the code.
+            There is an additional problem called <Code>Solution</Code> which shows the correct output for the algorithm with no bugs for you to compare the graphs from the problems to.
+            <br /><br />
+            The template code for each problem will be loaded into the editor when you select a problem.
+            You can then modify the code to try and solve the problem.
+          </p>
+        </Instruction>
+
+        <Instruction
+          title="Configuring the MCTS Simulation"
+          images={[RuntimeConfigurationPicture]}
+        >
+          <p>
+            You can configure the maximum runtime in and maximum iterations for the MCTS algorithm.
+            The maximum runtime is the maximum time the algorithm can run for in seconds.
+            The maximum iterations is the maximum number of iterations the algorithm can run for.
+            It will <b>NOT</b> automatically re-run the simulation when you change these values.
+            You must explictly run the code again to see the new results as accidently running the code for 100 seconds could cause your browser to hang.
+            <br /><br />
+            The default values are 0.25 seconds for the maximum runtime and 100,000 for the maximum iterations.
+            You can change these values to help you debug the algorithm.
+            <br /><br />
+            If you are getting inconsistent results, try running the code again with a larger <Code>Max Runtime</Code> and possibly also <Code>Max Iterations</Code>.
+            You can tell if which limit was reached by looking at the <Code>Visits</Code> metric on the root node.
+          </p>
+        </Instruction>
+
+        <Instruction
+          title="Visualising the Results"
+          images={[SetVisualisationTypePicture, VisualisationOptionsPicture]}
+        >
+          <p>
+            You can select the visualisation type using the navigation bar at the top the of the visualisation pane (on the right-hand side).
+            This will allow you to choose between the different visualisation types.
+            <br /><br />
+            Depending on the visualisation type you choose, you can also select the metric you want to plot and some graph specific options.
+            <br /><br />
+            The visualisations are interactive, so you can hover over or click on parts of the visualisation to see more information.
+            <br /><br />
+            Please note that the <Code>Expected Value</Code> metric is the average score for a single simulation from that node or a child.
+            Thus it is not available for the Treemap visualisation.
+            Also the JSON visualisation is the raw data computed by the simulation, thus there are no options for it.
+          </p>
+        </Instruction>
+
+
       </Section>
 
       <Section>
@@ -217,10 +359,10 @@ export default function Induction(): ReactNode {
         <ol className="list-decimal pl-6">
           <li>How long did the problem take you?</li>
           <li>What do you think the bug was for this problem? If you ran out of time give your best guess and include code if you think it is helpful.</li>
-          <li>On a scale of 1 to 10, how easy was it to find the bug? (1 being hard even for an export, 10 being easy even for a novice)</li>
+          <li>On a scale of 1 to 10, how easy was it to find the bug? (1 being hard even for an expert, 10 being easy even for a novice)</li>
           <li>What visualisations did you use to help you find the bug?</li>
           <li>On a scale of 1 to 10, how helpful were the visualisations? (1 being useless, 10 being impossible to solve without)</li>
-          <li>What would you change about the visualisations?</li>
+          <li>What would you change about the visualisations? The is related to the design & usage of the visualisation. If you found any bugs with the visualisations then include that in the next question.</li>
           <li>Any other comments?</li>
         </ol>
       </Section>

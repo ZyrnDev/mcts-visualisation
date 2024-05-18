@@ -121,7 +121,7 @@ def score(action_sequence):
 
 def upper_confidence_bound(node, exploration_exploitation_parameter):
   if node.visits == 0:
-    return 0.5 # The node has not been visited so avoid division by zero by returning a default value
+    return 0.5 # The node has not been visited so avoid division by zero by returning a default UCB score for unvisited nodes
 
   exploitation = node.score / node.visits
   exploration = exploration_exploitation_parameter * math.sqrt(2 * math.log(node.parent.visits) / node.visits)
@@ -142,7 +142,7 @@ def select(node):
     score = upper_confidence_bound(child, exploration_exploitation_parameter=0.8)
     
     # The AI player is trying to maximize the score, the other player is trying to minimize it
-    if player != AI_PLAYER and child.visits != 0: # If the child has not been visited the we still want the score to be positive infinity so that we simulate the child
+    if player != AI_PLAYER and child.visits != 0: # If the child has not been visited then we still want the score to be positive infinity so that we simulate the child
       score = -score
 
     if score > best_score:

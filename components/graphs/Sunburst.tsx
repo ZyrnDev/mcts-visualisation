@@ -71,7 +71,7 @@ function SunburstRoot({ root, radius }: SunburstRootProps): ReactNode {
   const updateSubtree = (newRoot: HierarchyNode<Node>) => setSubtreeRoot(newRoot);
   const resetSubtree = () => setSubtreeRoot(treeRoot);
 
-  const depth = treeRoot.height;
+  const depth = treeRoot.height + 1; // Add one to include the root node
 
   return (
     <Segment
